@@ -106,7 +106,8 @@ jobs:
             command: |
              cd backend
              npm i
-             npm audit fix --audit-level=critical --force
+             npm audit --audit-level=critical
+             #npm audit fix --audit-level=critical --force
   scan-backend:
     docker:
       - image: circleci/node:13.8.0
@@ -119,7 +120,8 @@ jobs:
             command: |
              cd backend
              npm i
-             npm audit fix --audit-level=critical --force  
+             npm audit --audit-level=critical
+             #npm audit fix --audit-level=critical --force  
   deploy-infrastructure:
     docker:
       - image: amazon/aws-cli
@@ -169,7 +171,7 @@ jobs:
     steps:
       - checkout
       - add_ssh_keys:
-          fingerprints: ['18:a9:c3:95:79:a4:24:97:05:9c:a6:ce:aa:a2:17:37'] #['69:fe:8c:6a:bb:be:56:11:a7:e8:4d:27:b9:59:6d:90'] #["2c:96:88:f7:91:5d:4f:3d:8e:41:d8:bd:46:c0:ee:7e"]
+          fingerprints: ['4c:d2:f4:f5:ff:ec:95:60:eb:2f:ec:d7:33:79:1c:b9'] #['69:fe:8c:6a:bb:be:56:11:a7:e8:4d:27:b9:59:6d:90'] #["2c:96:88:f7:91:5d:4f:3d:8e:41:d8:bd:46:c0:ee:7e"]
       - attach_workspace:
           at: .circleci/ansible
       - run:
