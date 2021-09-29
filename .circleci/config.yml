@@ -170,7 +170,7 @@ jobs:
 
             # echo "check inv file"
             # cat inventory.txt
-      - destroy-environment
+      
 
       
   configure-infrastructure:
