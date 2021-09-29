@@ -106,8 +106,8 @@ jobs:
             command: |
              cd backend
              npm i
-             npm audit --audit-level=critical
-             #npm audit fix --audit-level=critical --force
+             #npm audit --audit-level=critical
+             npm audit fix --audit-level=critical --force
   scan-backend:
     docker:
       - image: circleci/node:13.8.0
@@ -120,8 +120,8 @@ jobs:
             command: |
              cd backend
              npm i
-             npm audit --audit-level=critical
-             #npm audit fix --audit-level=critical --force  
+             #npm audit --audit-level=critical
+             npm audit fix --audit-level=critical --force  
   deploy-infrastructure:
     docker:
       - image: amazon/aws-cli
