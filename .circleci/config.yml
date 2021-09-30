@@ -126,54 +126,50 @@ jobs:
     docker:
       - image: amazon/aws-cli
     steps:
-      # Checkout code from git
       - checkout
-      - run:
-          name: installing required software
-          command: |
-            yum install tar -y
-            yum install gzip -y
-            yum -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
-            yum install jq -y
+      # - restore_cache:
+      #     keys: 
+      #       - inventory-${CIRCLE_WORKFLOW_ID}
+
       - run:
           name: Ensure back-end infrastructure exists
           command: |
             aws cloudformation deploy \
               --template-file .circleci/files/backend.yml \
-              --tags project=udapeople \
-              --stack-name prod-backend-${CIRCLE_WORKFLOW_ID:0:7} \
-              --parameter-overrides ID="${CIRCLE_WORKFLOW_ID:0:7}"
+              --stack-name udacity-backend-${CIRCLE_WORKFLOW_ID} \
+              --tags StackName=udacity-backend-${CIRCLE_WORKFLOW_ID} \
+              --parameter-overrides ID=${CIRCLE_WORKFLOW_ID}
       - run:
           name: Ensure front-end infrastructure exist
           command: |
             aws cloudformation deploy \
               --template-file .circleci/files/frontend.yml \
-              --tags project=udapeople \
-              --stack-name "prod-frontend-${CIRCLE_WORKFLOW_ID:0:7}" \
-              --parameter-overrides ID="${CIRCLE_WORKFLOW_ID:0:7}"
-      - run: echo \[web\] > ./.circleci/ansible/inventory
+              --tags StackName=udacity-frontend-${CIRCLE_WORKFLOW_ID} \
+              --stack-name udacity-frontend-${CIRCLE_WORKFLOW_ID} \
+              --parameter-overrides ID=${CIRCLE_WORKFLOW_ID}
       - run:
-          name: Add back-end ip to ansible inventory
+          name: Add back-end ip to ansible inventory, this time use memstash
           command: |
-            aws ec2 describe-instances \
-            --query 'Reservations[*].Instances[*].PublicIpAddress' \
-            --filters "Name=tag:Name,Values=backend-${CIRCLE_WORKFLOW_ID:0:7}" \
-            --output text >> ./.circleci/ansible/inventory
-            cat ./.circleci/ansible/inventory
-      - persist_to_workspace:
-          root: .circleci/ansible/
-          paths:
-            - inventory
-      - run: pwd
-      - run: cat ~/project/.circleci/ansible/inventory
-      - slack/notify:
-          event: fail
-          template: basic_fail_1
-      - slack/notify:
-          event: pass
-          template: success_tagged_deploy_1
-      - destroy-environment
-      # Here's where you will add some code to rollback on failure
+            INSTANCE_IP=$(aws ec2 describe-instances \
+            --filters 'Name=tag:Name,Values=backend-*' \
+            --query "Reservations[*].Instances[*].PublicIpAddress" \
+            --output text)
+
+            echo ${INSTANCE_IP}
+            curl -H "Content-Type: text/plain" \
+               -H "token: ${CIRCLE_WORKFLOW_ID}" \
+               --request PUT \
+               --data ${INSTANCE_IP} \
+               https://api.memstash.io/values/instance_ip
+
+            # cd .circleci/ansible/
+            # aws ec2 describe-instances \
+            # --filters 'Name=tag:Name,Values=backend-*' \
+            # --query 'Reservations[*].Instances[*].PublicIpAddress' \
+            # --region us-west-2 --output text >> inventory.txt
+
+            # echo "check inv file"
+            # cat inventory.txt
       
 
       
