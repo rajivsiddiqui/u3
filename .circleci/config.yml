@@ -127,42 +127,49 @@ jobs:
       - image: amazon/aws-cli
     steps:
       - checkout
-      - run: yum install -y tar 
-      - run: yum install -y gzip
+      # - restore_cache:
+      #     keys: 
+      #       - inventory-${CIRCLE_WORKFLOW_ID}
+
       - run:
           name: Ensure back-end infrastructure exists
           command: |
             aws cloudformation deploy \
               --template-file .circleci/files/backend.yml \
-              --tags project=udapeople \
-               --stack-name "udapeople-backend-${CIRCLE_WORKFLOW_ID}" \
-               --parameter-overrides ID="${CIRCLE_WORKFLOW_ID}"  
-            URLS=$(aws ec2 describe-instances --region us-west-2 --query "Reservations[*].Instances[*].PublicIpAddress"   --output text)
-            echo "URLS=$URLS"    
-            echo $URLS >> .circleci/ansible/inventory.txt
-            cat ./.circleci/ansible/inventory.txt
-            curl -H "Content-Type: text/plain" -H "token: 4494694a-4f89-4073-a5a0-00fb827decc6" --request PUT --data "URLS" https://api.memstash.io/values/CIRCLE_WORKFLOW_ID
-      - persist_to_workspace:
-            root: .circleci/ansible
-            paths:
-              - inventory.txt      
+              --stack-name udacity-backend-${CIRCLE_WORKFLOW_ID} \
+              --tags StackName=udacity-backend-${CIRCLE_WORKFLOW_ID} \
+              --parameter-overrides ID=${CIRCLE_WORKFLOW_ID}
       - run:
           name: Ensure front-end infrastructure exist
           command: |
             aws cloudformation deploy \
               --template-file .circleci/files/frontend.yml \
-              --tags project=udapeople \
-               --stack-name "udapeople-frontend-${CIRCLE_WORKFLOW_ID}" \
-               --parameter-overrides ID="${CIRCLE_WORKFLOW_ID}"  
-               ARN=$(aws s3 ls | grep udapeople)
-               echo "ARN=$ARN"
-               curl -H "Content-Type: text/plain" -H "token: 4494694a-4f89-4073-a5a0-00fb827decc6" --request PUT --data "$ARN" https://api.memstash.io/values/arn_${CIRCLE_WORKFLOW_ID}
-      
-      - destroy-environment:
-          workflow_id: ${CIRCLE_WORKFLOW_ID}
+              --tags StackName=udacity-frontend-${CIRCLE_WORKFLOW_ID} \
+              --stack-name udacity-frontend-${CIRCLE_WORKFLOW_ID} \
+              --parameter-overrides ID=${CIRCLE_WORKFLOW_ID}
+      - run:
+          name: Add back-end ip to ansible inventory, this time use memstash
+          command: |
+            INSTANCE_IP=$(aws ec2 describe-instances \
+            --filters 'Name=tag:Name,Values=backend-*' \
+            --query "Reservations[*].Instances[*].PublicIpAddress" \
+            --output text)
 
-      - revert-migrations:
-          workflow_id: ${CIRCLE_WORKFLOW_ID}
+            echo ${INSTANCE_IP}
+            curl -H "Content-Type: text/plain" \
+               -H "token: ${CIRCLE_WORKFLOW_ID}" \
+               --request PUT \
+               --data ${INSTANCE_IP} \
+               https://api.memstash.io/values/instance_ip
+
+            # cd .circleci/ansible/
+            # aws ec2 describe-instances \
+            # --filters 'Name=tag:Name,Values=backend-*' \
+            # --query 'Reservations[*].Instances[*].PublicIpAddress' \
+            # --region us-west-2 --output text >> inventory.txt
+
+            # echo "check inv file"
+            # cat inventory.txt
       
 
       
