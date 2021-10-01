@@ -58,6 +58,4 @@ Before you submit your project, please check your work against the project rubri
 
 [License](LICENSE.md)
 # u3
-# edit part 3
-# add new securty gp in vpc
-# added new db
+# s
