@@ -320,7 +320,7 @@ jobs:
             pip install awscli
       - run:
           name: Get backend url and smoke test
-          no_output_timeout: 30m
+          no_output_timeout: 300s
           command: |
               BACKEND_URL=$(aws ec2 describe-instances \
               --filters Name=instance-state-name,Values=running \
