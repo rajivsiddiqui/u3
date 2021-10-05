@@ -147,21 +147,28 @@ jobs:
               --stack-name udacity-frontend-${CIRCLE_WORKFLOW_ID} \
               --parameter-overrides ID=${CIRCLE_WORKFLOW_ID}
       - run:
-          name: Add back-end ec2 ip to ansible inventory file 
-          command: |               
-            export backend_IP=$(aws ec2 describe-instances \
-              --query 'Reservations[*].Instances[*].PublicIpAddress' \
-              --filters "Name=tag:Name,Values=ebackend-${CIRCLE_WORKFLOW_ID:0:7}" \
-              --output text >> .circleci/ansible/inventory.txt)
-            cat ./.circleci/ansible/inventory.txt
-      - persist_to_workspace:
-          root: ~/
-          paths:
-            - project/.circleci/ansible/inventory.txt
-       #destroy env # Here's where you will add some code to rollback on failure
-       #  set to trigger email notification on failure
-     # - revert-migrations
-      #- destroy-environment
+          name: Add back-end ip to ansible inventory, this time use memstash
+          command: |
+            INSTANCE_IP=$(aws ec2 describe-instances \
+            --filters 'Name=tag:Name,Values=backend-*' \
+            --query "Reservations[*].Instances[*].PublicIpAddress" \
+            --output text)
+
+            echo ${INSTANCE_IP}
+            curl -H "Content-Type: text/plain" \
+               -H "token: ${CIRCLE_WORKFLOW_ID}" \
+               --request PUT \
+               --data ${INSTANCE_IP} \
+               https://api.memstash.io/values/instance_ip
+
+            cd .circleci/ansible/
+            aws ec2 describe-instances \
+            --filters 'Name=tag:Name,Values=backend-*' \
+            --query 'Reservations[*].Instances[*].PublicIpAddress' \
+            --region us-west-2 --output text >> inventory.txt
+
+            echo "check inv file"
+            cat inventory.txt
       
 
       
