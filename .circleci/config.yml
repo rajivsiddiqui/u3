@@ -327,7 +327,7 @@ jobs:
               --query 'Reservations[*].Instances[*].PublicDnsName' \
               --output text)
                echo "${BACKEND_URL}"
-               curl "http://${BACKEND_URL}:3030/api/status"
+               curl "http://$BACKEND_URL:3030/api/status"
               
       - run:
           name: Frontend smoke test.
