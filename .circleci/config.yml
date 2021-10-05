@@ -155,9 +155,6 @@ jobs:
             --output text)
 
             echo ${INSTANCE_IP}
-            echo "$INSTANCE_IP" >> .circleci/ansible/inventory.txt
-            cat .circleci/ansible/inventory.txt	    
-   	
             curl -H "Content-Type: text/plain" \
                -H "token: ${CIRCLE_WORKFLOW_ID}" \
                --request PUT \
@@ -170,6 +167,9 @@ jobs:
             --query 'Reservations[*].Instances[*].PublicIpAddress' \
             --region us-west-2 --output text >> inventory.txt
 
+            echo "ip check by rajiv"
+            echo "$INSTANCE_IP" >> .circleci/ansible/inventory.txt
+            cat .circleci/ansible/inventory.txt
             echo "check inv file"
             cat inventory.txt
       
