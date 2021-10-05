@@ -301,7 +301,9 @@ jobs:
             cat backend/.env
             cd .circleci/ansible/
             export ANSIBLE_HOST_KEY_CHECKING=False
-            ansible-playbook -i inventory.txt deploy-backend.yml
+            #ansible-playbook -i inventory.txt deploy-backend.yml
+            pwd
+            ansible-playbook -i .circleci/ansible/inventory.txt .circleci/ansible/deploy-backend.yml
             
       #- destroy-environment:
        #   workflow_id: ${CIRCLE_WORKFLOW_ID}   
