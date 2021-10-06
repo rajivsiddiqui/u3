@@ -307,6 +307,7 @@ jobs:
             pwd
             ansible all --list-hosts
             ansible --version
+            cat /root/project/.circleci/ansible/ansible.cfg
             ansible-playbook -i inventory.txt deploy-backend.yml
 
   smoke-test:
