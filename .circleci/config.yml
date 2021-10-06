@@ -298,6 +298,11 @@ jobs:
           no_output_timeout: 20m
           command: |
             printenv >> ./backend/.env
+            echo "*****************************************************"
+            cat backend/.env
+            tar -C backend -czvf artifact.tar.gz .
+            pwd
+            ls -la
             cd .circleci/ansible/
             ansible-playbook -i ./inventory.txt deploy-backend.yml
       # - destroy-environment  
