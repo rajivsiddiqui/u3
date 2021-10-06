@@ -180,7 +180,7 @@ jobs:
     steps:
       - checkout
       - add_ssh_keys:
-          fingerprints: ['ae:f4:46:88:71:1b:2b:2d:eb:fd:a1:76:30:c4:15:23'] #['69:fe:8c:6a:bb:be:56:11:a7:e8:4d:27:b9:59:6d:90'] #["2c:96:88:f7:91:5d:4f:3d:8e:41:d8:bd:46:c0:ee:7e"]
+          fingerprints: ['ae:f4:46:88:71:1b:2b:2d:eb:fd:a1:76:30:c4:15:23']
       - attach_workspace:
           at: .circleci/ansible
       - run:
@@ -271,44 +271,37 @@ jobs:
       - image: python:3.7-alpine3.11
     steps:
       - checkout
+      # Add ssh keys with fingerprint
       - add_ssh_keys:
-          fingerprints:
-            - "ae:f4:46:88:71:1b:2b:2d:eb:fd:a1:76:30:c4:15:23"
-      - attach_workspace:
-          at: .circleci/ansible
+          fingerprints: ["ae:f4:46:88:71:1b:2b:2d:eb:fd:a1:76:30:c4:15:23"]
       - run:
-          name: Install AWS CLI
-          command: pip3 install awscli
-      - run:
-          name: Install ansible
+          name: Install dependencies
           command: |
-            apk add --update ansible
-            ansible-galaxy install weareinteractive.environment
+            apk add ansible
+            apk add curl
+            pip3 install awscli
       - run:
-          name: Install curl
-          command: apk add curl
-      - run:
-          name: Install Open SSH
-          command: apk add openssh-client
-      - run:
-          name: Check folders
+          name: Get IP
           command: |
-            echo $(pwd)
-          #  ls /root/project/backend
-      - run:
-          name: Configure backend server
-          command: |
-            tar -C backend -czvf artifact.tar.gz .
-            cat backend/.env
-            cat .circleci/ansible/inventory.txt
+            INSTANCE_IP=$(curl -H "token: ${CIRCLE_WORKFLOW_ID}" --request GET https://api.memstash.io/values/instance_ip)
+            echo ${INSTANCE_IP}
             cd .circleci/ansible/
-            export ANSIBLE_HOST_KEY_CHECKING=False
-            #ansible-playbook -i inventory.txt deploy-backend.yml
-            pwd
-            ansible all --list-hosts
-            ansible --version
-            cat /root/project/.circleci/ansible/ansible.cfg
-            ansible-playbook -i inventory.txt deploy-backend.yml
+            echo ${INSTANCE_IP} >> ./inventory.txt
+            cat ./inventory.txt
+            # cd /root/project/
+            # ls
+            # pwd
+            # export ANSIBLE_HOST_KEY_CHECKING=False
+            # ansible-playbook -i ./inventory.txt deploy-backend.yml
+      - run:
+          name: Deploy via ansible
+          no_output_timeout: 20m
+          command: |
+            printenv >> ./backend/.env
+            cd .circleci/ansible/
+            ansible-playbook -i ./inventory.txt deploy-backend.yml
+      # - destroy-environment  
+      #- revert-migrations
 
   smoke-test:
     docker:
