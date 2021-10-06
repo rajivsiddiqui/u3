@@ -20,11 +20,13 @@
     state: directory
 
 - name: Copy backend dist files web server
+  become: true
   copy:
     src: /root/project/artifact.tar.gz
     dest: /home/ubuntu/backend/artifact.tar.gz
 
 - name: Uncompress Backend
+  become: true
   shell: |
     cd /home/ubuntu/backend
     tar xvzf artifact.tar.gz -C .
