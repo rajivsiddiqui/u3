@@ -272,44 +272,36 @@ jobs:
     steps:
       - checkout
       - add_ssh_keys:
-          fingerprints:
-            - "ae:f4:46:88:71:1b:2b:2d:eb:fd:a1:76:30:c4:15:23"
+          fingerprints: ["ae:f4:46:88:71:1b:2b:2d:eb:fd:a1:76:30:c4:15:23"]
       - attach_workspace:
-          at: .circleci/ansible
+          at: /tmp/.circleci/ansible
+
       - run:
-          name: Install AWS CLI
-          command: pip3 install awscli
-      - run:
-          name: Install ansible
+          name: Install dependencies
           command: |
             apk add --update ansible
-            ansible-galaxy install weareinteractive.environment
+            apk add --update tar gzip curl
+            apk add --update openssh-client
       - run:
-          name: Install curl
-          command: apk add curl
-      - run:
-          name: Install Open SSH
-          command: apk add openssh-client
-      - run:
-          name: Check folders
+          name: Deploy Backend
           command: |
-            echo $(pwd)
-          #  ls /root/project/backend
-      - run:
-          name: Configure backend server
-          command: |
-            tar -C backend -czvf artifact.tar.gz .
+            echo ENVIROMENT=production > "backend/.env"
+            echo TYPEORM_CONNECTION=postgres >> "backend/.env"
+            echo TYPEORM_ENTITIES=./src/modules/domain/**/*.entity.ts >> "backend/.env"
+            echo TYPEORM_HOST=$TYPEORM_HOST >> "backend/.env"
+            echo TYPEORM_PORT=$TYPEORM_PORT >> "backend/.env"
+            echo TYPEORM_USERNAME=$TYPEORM_USERNAME >> "backend/.env"
+            echo TYPEORM_MIGRATIONS=$TYPEORM_MIGRATIONS >> "backend/.env"
+            echo TYPEORM_MIGRATIONS_DIR=$TYPEORM_MIGRATIONS_DIR >> "backend/.env"
+            echo TYPEORM_PASSWORD=$TYPEORM_PASSWORD >> "backend/.env"
+            echo TYPEORM_DATABASE=$TYPEORM_DATABASE >> "backend/.env"
             cat backend/.env
-            cd .circleci/ansible/
-            export ANSIBLE_HOST_KEY_CHECKING=False
-            #ansible-playbook -i inventory.txt deploy-backend.yml
-            pwd
-            ansible-playbook -i .circleci/ansible/inventory.txt .circleci/ansible/deploy-backend.yml
-            
-      #- destroy-environment:
-       #   workflow_id: ${CIRCLE_WORKFLOW_ID}   
-      #- revert-migrations:
-       #   workflow_id: ${CIRCLE_WORKFLOW_ID}    
+            tar -C backend -czvf artifact.tar.gz .
+            ls -la
+            ansible-galaxy install weareinteractive.environment
+            ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i /tmp/.circleci/ansible/inventory.txt .circleci/ansible/deploy-backend.yml
+      - revert-migrations
+      - destroy-environment 
 
   smoke-test:
     docker:
