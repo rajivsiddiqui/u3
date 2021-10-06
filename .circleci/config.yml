@@ -274,7 +274,7 @@ jobs:
       - add_ssh_keys:
           fingerprints: ["ae:f4:46:88:71:1b:2b:2d:eb:fd:a1:76:30:c4:15:23"]
       - attach_workspace:
-          at: /tmp/.circleci/ansible
+          at: .circleci/ansible
 
       - run:
           name: Install dependencies
@@ -299,7 +299,7 @@ jobs:
             tar -C backend -czvf artifact.tar.gz .
             ls -la
             ansible-galaxy install weareinteractive.environment
-            ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i /tmp/.circleci/ansible/inventory.txt .circleci/ansible/deploy-backend.yml
+            ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i .circleci/ansible/inventory.txt .circleci/ansible/deploy-backend.yml
       #- revert-migrations
       #- destroy-environment 
 
